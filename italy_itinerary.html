@@ -427,7 +427,7 @@
 
 <div class="summary">
   <div class="summary-chip"><div class="label">Trip Duration</div><div class="value">15 Oct – 1 Nov</div></div>
-  <div class="summary-chip"><div class="label">Rome</div><div class="value">15 – 17 Oct · 3 days</div></div>
+  <div class="summary-chip"><div class="label">Rome</div><div class="value">15 – 18 Oct · 4 days</div></div>
   <div class="summary-chip"><div class="label">Milan</div><div class="value">27 Oct – 1 Nov · 5 days</div></div>
   <div class="summary-chip"><div class="label">Travellers</div><div class="value">Son · Dad · Mom</div></div>
 </div>
@@ -446,7 +446,7 @@ const itinerary = [
   {
     city: "Roma",
     flag: "🏛️",
-    dateRange: "15 – 17 Oct 2026",
+    dateRange: "15 – 18 Oct 2026",
     color: "rome",
     days: [
       {
@@ -477,6 +477,23 @@ const itinerary = [
           { dep: "10:00", arr: "13:00", travellers: "Son · Dad · Mom", from: "Hotel", to: "Vatican City", type: "Art & Religion", activity: "Vatican Museums & Sistine Chapel", notes: "Saturday will be busy; skip-the-line tickets must be booked in advance.", status: "critical" },
           { dep: "13:15", arr: "14:45", travellers: "Son · Dad · Mom", from: "Vatican City", to: "Tonnarello San Pietro", type: "Dining", activity: "Lunch at Tonnarello San Pietro", notes: "Traditional Roman pastas in generous portions.", status: "planning" },
           { dep: "15:00", arr: "16:30", travellers: "Son · Dad · Mom", from: "Restaurant", to: "Saint Peter's Basilica", type: "Landmark", activity: "Saint Peter's Basilica & Square", notes: "Entry is free, but security line can take time. Shoulders and knees must be covered.", status: "planning" },
+        ]
+      },
+      {
+        date: "Sun 18 Oct 2026",
+        desc: "Historic Center, Trastevere & Farewell Dinner",
+        items: [
+          { dep: "07:00", arr: "07:30", travellers: "Son · Dad · Mom", from: "Hotel", to: "Hotel", type: "Leisure", activity: "Early Departure", notes: "Light breakfast before heading out.", status: "planning" },
+          { dep: "07:30", arr: "08:30", travellers: "Son · Dad · Mom", from: "Hotel", to: "Trevi Fountain", type: "Sightseeing", activity: "Trevi Fountain Visit", notes: "Best before 8am — far fewer crowds and beautiful morning light for photos.", status: "planning" },
+          { dep: "08:30", arr: "09:00", travellers: "Son · Dad · Mom", from: "Trevi Fountain", to: "Pantheon Area", type: "Sightseeing", activity: "Pantheon Exterior & Piazza della Rotonda", notes: "Pantheon opens at 9am — arrive early to admire the exterior and grab coffee at the piazza.", status: "planning" },
+          { dep: "09:00", arr: "10:00", travellers: "Son · Dad · Mom", from: "Pantheon Area", to: "Pantheon", type: "Landmark", activity: "Pantheon Interior Visit", notes: "One of the best-preserved ancient buildings in the world. Small entry fee.", status: "planning" },
+          { dep: "10:00", arr: "11:00", travellers: "Son · Dad · Mom", from: "Pantheon", to: "Piazza Navona", type: "Sightseeing", activity: "Walk to Piazza Navona", notes: "5-min walk from Pantheon. Baroque piazza with Bernini's Fountain of the Four Rivers. Lively on Sundays.", status: "planning" },
+          { dep: "11:00", arr: "12:30", travellers: "Son · Dad · Mom", from: "Piazza Navona", to: "Piazza Navona Area", type: "Leisure", activity: "Coffee & Rest Break", notes: "Sit at a café and rest feet before afternoon leg.", status: "planning" },
+          { dep: "12:30", arr: "14:30", travellers: "Son · Dad · Mom", from: "Piazza Navona Area", to: "Trastevere", type: "Dining", activity: "Lunch in Trastevere", notes: "Cross the river — 20-min walk or short taxi. Best neighbourhood for authentic Roman Sunday lunch. Recommend Da Enzo al 29.", status: "planning" },
+          { dep: "14:30", arr: "16:00", travellers: "Son · Dad · Mom", from: "Trastevere", to: "Trastevere", type: "Leisure", activity: "Explore Trastevere Streets", notes: "Cobblestone streets and medieval charm. Very walkable and low effort — great pace for parents.", status: "planning" },
+          { dep: "16:00", arr: "17:30", travellers: "Son · Dad · Mom", from: "Trastevere", to: "Gianicolo Hill", type: "Sightseeing", activity: "Gianicolo Hill Panoramic View", notes: "Short uphill walk or taxi from Trastevere. Best panoramic view of Rome — ideal late afternoon light.", status: "planning" },
+          { dep: "17:30", arr: "19:30", travellers: "Son · Dad · Mom", from: "Gianicolo Hill", to: "Hotel", type: "Rest", activity: "Return to Hotel & Rest", notes: "Rest before farewell dinner.", status: "planning" },
+          { dep: "19:30", arr: "21:30", travellers: "Son · Dad · Mom", from: "Hotel", to: "Trastevere / Pantheon Area", type: "Dining", activity: "Farewell Dinner in Rome", notes: "Return to Trastevere or dine near Pantheon. Recommend Il Sorpasso or Tonnarello.", status: "planning" },
         ]
       }
     ]
