@@ -196,6 +196,13 @@
     margin-bottom: 6px;
   }
   .traveller-tag { font-size: 12px; color: #666; }
+  a.map-link {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: #aaa;
+    text-underline-offset: 2px;
+  }
+  a.map-link:hover { text-decoration-color: black; }
 
   /* Column 4: badge */
   .card-footer { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; padding-top: 1px; }
@@ -279,10 +286,10 @@
 <div id="sections"></div>
 
 <div class="legend">
-  <div class="legend-item"><div class="legend-dot" style="background:var(--terracotta)"></div> Book ahead required</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> Booked</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div> Planning</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div> Not booked</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#111"></div> Book ahead</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#e8e8e8;border:1.5px solid #333"></div> Booked</div>
+  <div class="legend-item"><div class="legend-dot" style="background:white;border:1.5px solid #555"></div> Planning</div>
+  <div class="legend-item"><div class="legend-dot" style="background:white;border:1.5px dashed #555"></div> Not booked</div>
 </div>
 
 <script>
@@ -460,8 +467,9 @@ itinerary.forEach(city => {
     const grid = document.createElement('div');
     grid.className = 'grid';
 
+    const noMapTypes = new Set(['Flight', 'Travel', 'Transfer', 'Rest', 'Train']);
+
     day.items.forEach((item, i) => {
-      const isFlightCard = item.type === 'Flight' || item.type === 'Travel';
       let badge = '';
       if (item.status === 'critical') badge = '<span class="priority-badge">⚠ Book Ahead</span>';
       else if (item.status === 'not-booked') badge = '<span class="badge not-booked">Not Booked</span>';
@@ -471,6 +479,13 @@ itinerary.forEach(city => {
       const timeDisplay = (item.dep !== '—' || item.arr !== '—')
         ? `<div class="time-row">${item.dep}<br><span class="sep">↓</span><br>${item.arr}</div>`
         : `<div class="time-row">—</div>`;
+
+      const mapsUrl = !noMapTypes.has(item.type)
+        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.to + ', ' + city.city + ', Italy')}`
+        : null;
+      const destLabel = mapsUrl
+        ? `<a class="map-link" href="${mapsUrl}" target="_blank" rel="noopener">${item.to} ↗</a>`
+        : item.to;
 
       grid.innerHTML += `
         <div class="card">
@@ -483,7 +498,7 @@ itinerary.forEach(city => {
               <div class="route">
                 <span class="route-from">${item.from}</span>
                 <span class="route-arrow">→</span>
-                <span class="route-to">${item.to}</span>
+                <span class="route-to">${destLabel}</span>
               </div>
               <div class="notes">${item.notes}</div>
               <span class="traveller-tag">${item.travellers}</span>
