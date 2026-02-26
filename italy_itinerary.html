@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Italy Itinerary 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --cream: #f5f0e8;
+    --dark: #1a1208;
+    --gold: #c9a84c;
+    --gold-light: #e8d5a3;
+    --terracotta: #c85a2a;
+    --blue: #2a6ac8;
+    --green: #3a8a4a;
+    --stone: #8c7b6b;
+    --card-bg: #faf7f2;
+  }
+  body {
+    background: var(--cream);
+    color: var(--dark);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    padding: 36px 20px 80px;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 44px;
+  }
+  header::before {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 2px;
+    background: var(--gold);
+    margin: 0 auto 18px;
+  }
+  .trip-label {
+    font-weight: 300;
+    letter-spacing: 0.35em;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--stone);
+    margin-bottom: 8px;
+  }
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.9rem, 5vw, 3.4rem);
+    font-weight: 400;
+    line-height: 1.1;
+  }
+  h1 em { font-style: italic; color: var(--terracotta); }
+  .travellers {
+    margin-top: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--dark);
+    color: var(--cream);
+    padding: 6px 18px;
+    border-radius: 100px;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+  }
+  .travellers span { color: var(--gold); }
+
+  /* City section */
+  .city-section { max-width: 1100px; margin: 0 auto 56px; }
+  .city-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--gold-light);
+  }
+  .city-heading .city-flag { font-size: 22px; }
+  .city-heading h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+  }
+  .city-dates-range {
+    font-size: 12px;
+    color: var(--stone);
+    letter-spacing: 0.08em;
+    margin-left: auto;
+  }
+
+  /* Date group */
+  .date-group { margin-bottom: 32px; }
+  .date-strip {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .date-pill {
+    background: var(--dark);
+    color: var(--cream);
+    padding: 5px 14px;
+    border-radius: 100px;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .date-pill.rome { background: var(--terracotta); }
+  .date-pill.milan { background: #3d5a80; }
+  .day-description {
+    font-size: 12px;
+    color: var(--stone);
+    font-style: italic;
+  }
+  .date-divider { flex: 1; height: 1px; background: var(--gold-light); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 14px;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--gold-light);
+    border-radius: 4px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    animation: fadeUp 0.45s both;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 28px rgba(26,18,8,0.11);
+  }
+  .card.flight { border-color: #a0c4f5; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .card-accent { height: 4px; background: linear-gradient(90deg, var(--gold), var(--terracotta)); }
+  .card.flight .card-accent { background: linear-gradient(90deg, var(--blue), #6aaef5); }
+
+  .card-body { padding: 17px 19px 15px; }
+
+  .time-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--stone);
+    margin-bottom: 9px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+  .time-row .sep { color: var(--gold-light); }
+
+  .card-type {
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--stone);
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.08rem;
+    font-weight: 700;
+    line-height: 1.25;
+    margin-bottom: 3px;
+  }
+  .card-subtitle {
+    font-size: 12px;
+    color: var(--stone);
+    margin-bottom: 11px;
+  }
+  .route {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    background: rgba(201,168,76,0.1);
+    padding: 6px 10px;
+    border-radius: 3px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .route-from { font-weight: 500; }
+  .route-arrow { color: var(--gold); flex-shrink: 0; }
+  .route-to { font-weight: 600; color: var(--terracotta); }
+
+  .notes {
+    font-size: 12px;
+    line-height: 1.6;
+    color: #5a4d3f;
+    border-left: 2px solid var(--gold-light);
+    padding-left: 10px;
+    margin-bottom: 12px;
+  }
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 100px;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+  }
+  .badge.not-booked { border-color: var(--blue); color: var(--blue); }
+  .badge.booked { border-color: var(--green); color: var(--green); }
+  .priority-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 100px;
+    background: var(--terracotta);
+    color: white;
+  }
+  .traveller-tag { font-size: 10px; color: var(--stone); }
+
+  /* Summary bar */
+  .summary {
+    max-width: 1100px;
+    margin: 0 auto 44px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .summary-chip {
+    background: var(--card-bg);
+    border: 1px solid var(--gold-light);
+    border-radius: 4px;
+    padding: 10px 16px;
+    font-size: 12px;
+    flex: 1;
+    min-width: 140px;
+  }
+  .summary-chip .label { color: var(--stone); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 4px; }
+  .summary-chip .value { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; }
+
+  .legend {
+    max-width: 1100px;
+    margin: 16px auto 0;
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--stone);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  @media (max-width: 480px) {
+    body { padding: 20px 12px 60px; }
+    h1 { font-size: 1.8rem; }
+    .grid { grid-template-columns: 1fr; }
+    .card-body { padding: 14px 13px 12px; }
+    .city-heading h2 { font-size: 1.3rem; }
+    .city-dates-range { display: none; }
+    .summary-chip { min-width: 120px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="trip-label">Travel Itinerary · October – November 2026</p>
+  <h1>Roma &amp; <em>Milano</em></h1>
+  <div class="travellers">✦ <span>Son · Dad · Mom</span> ✦</div>
+</header>
+
+<div class="summary">
+  <div class="summary-chip"><div class="label">Trip Duration</div><div class="value">15 Oct – 1 Nov</div></div>
+  <div class="summary-chip"><div class="label">Rome</div><div class="value">15 – 17 Oct · 3 days</div></div>
+  <div class="summary-chip"><div class="label">Milan</div><div class="value">27 Oct – 1 Nov · 5 days</div></div>
+  <div class="summary-chip"><div class="label">Travellers</div><div class="value">Son · Dad · Mom</div></div>
+</div>
+
+<div id="sections"></div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--terracotta)"></div> Book ahead required</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> Booked</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div> Planning</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div> Not booked</div>
+</div>
+
+<script>
+const itinerary = [
+  {
+    city: "Roma",
+    flag: "🏛️",
+    dateRange: "15 – 17 Oct 2026",
+    color: "rome",
+    days: [
+      {
+        date: "Thu 15 Oct 2026",
+        desc: "Arrival & Orientation — Dad & Mom",
+        items: [
+          { dep: "00:30", arr: "07:35", travellers: "Dad · Mom", from: "Hong Kong", to: "Fiumicino Aeroporto", type: "Flight", activity: "CX293 — Hong Kong → Rome", notes: "Overnight flight; Dad & Mom depart HKG 14 Oct night, arrive Rome morning.", status: "booked" },
+          { dep: "08:30", arr: "09:30", travellers: "Dad · Mom", from: "Fiumicino Aeroporto", to: "Hotel", type: "Transfer", activity: "Private Airport Transfer & Bag Drop", notes: "Safe and easy transit to avoid stress.", status: "planning" },
+          { dep: "12:00", arr: "13:30", travellers: "Dad · Mom", from: "Hotel Area", to: "Hotel Area", type: "Leisure", activity: "Light Lunch & Neighborhood Walk", notes: "Get some sunlight to help with jet lag.", status: "planning" },
+          { dep: "14:00", arr: "16:00", travellers: "Dad · Mom", from: "Hotel", to: "Hotel", type: "Rest", activity: "Check-in & Power Nap", notes: "Keep nap under 2 hours to ensure sleep at night.", status: "planning" },
+          { dep: "16:30", arr: "18:30", travellers: "Dad · Mom", from: "Hotel", to: "Rome Center", type: "Sightseeing", activity: "Hop-On Hop-Off Bus Tour", notes: "Zero-effort sightseeing before an early dinner.", status: "planning" },
+        ]
+      },
+      {
+        date: "Fri 16 Oct 2026",
+        desc: "Ancient Rome — Dad & Mom",
+        items: [
+          { dep: "09:30", arr: "13:00", travellers: "Dad · Mom", from: "Hotel", to: "Colosseum", type: "Landmark", activity: "Colosseum (Inside & Exterior)", notes: "Slow-paced morning dedicated solely to the amphitheater.", status: "planning" },
+          { dep: "13:00", arr: "15:00", travellers: "Dad · Mom", from: "Colosseum Area", to: "Trattoria Luzzi", type: "Dining", activity: "Lunch at Trattoria Luzzi", notes: "2-hour break to sit, rest feet, and enjoy authentic Roman food.", status: "planning" },
+          { dep: "15:00", arr: "17:30", travellers: "Dad · Mom", from: "Restaurant", to: "Roman Forum & Palatine Hill", type: "History", activity: "Roman Forum & Palatine Hill", notes: "Leisurely afternoon exploring the ruins with plenty of spots to sit and rest.", status: "planning" },
+        ]
+      },
+      {
+        date: "Sat 17 Oct 2026",
+        desc: "Son Arrives · Vatican Day",
+        items: [
+          { dep: "—", arr: "Morning", travellers: "Son", from: "—", to: "Rome", type: "Flight", activity: "Son's Flight Arrival", notes: "Arriving morning of 17 Oct; flight details TBC.", status: "not-booked" },
+          { dep: "10:00", arr: "13:00", travellers: "Son · Dad · Mom", from: "Hotel", to: "Vatican City", type: "Art & Religion", activity: "Vatican Museums & Sistine Chapel", notes: "Saturday will be busy; skip-the-line tickets must be booked in advance.", status: "critical" },
+          { dep: "13:15", arr: "14:45", travellers: "Son · Dad · Mom", from: "Vatican City", to: "Tonnarello San Pietro", type: "Dining", activity: "Lunch at Tonnarello San Pietro", notes: "Traditional Roman pastas in generous portions.", status: "planning" },
+          { dep: "15:00", arr: "16:30", travellers: "Son · Dad · Mom", from: "Restaurant", to: "Saint Peter's Basilica", type: "Landmark", activity: "Saint Peter's Basilica & Square", notes: "Entry is free, but security line can take time. Shoulders and knees must be covered.", status: "planning" },
+        ]
+      }
+    ]
+  },
+  {
+    city: "Milano",
+    flag: "🏙️",
+    dateRange: "27 Oct – 1 Nov 2026",
+    color: "milan",
+    days: [
+      {
+        date: "Tue 27 Oct 2026",
+        desc: "Arrival Day — Easy Start",
+        items: [
+          { dep: "12:00", arr: "—", travellers: "Son · Dad · Mom", from: "Rome", to: "Milan", type: "Travel", activity: "Arrive Milan — Noon", notes: "Transport TBC. Check in and freshen up before afternoon.", status: "not-booked" },
+          { dep: "19:00", arr: "21:30", travellers: "Son · Dad · Mom", from: "Hotel", to: "Navigli", type: "Food & Drink", activity: "Canal District & Aperitivo", notes: "Perfect arrival evening — easy walk, sunset drinks, and buffet food along the canals.", status: "planning" },
+        ]
+      },
+      {
+        date: "Wed 28 Oct 2026",
+        desc: "Duomo District — Full Day",
+        items: [
+          { dep: "09:30", arr: "12:30", travellers: "Son · Dad · Mom", from: "Hotel", to: "Duomo di Milano", type: "Landmark", activity: "Rooftop & Cathedral Visit", notes: "Best visited in the morning before crowds peak; rooftop lift requires tickets.", status: "planning" },
+          { dep: "12:30", arr: "14:00", travellers: "Son · Dad · Mom", from: "Duomo", to: "Galleria Vittorio Emanuele II", type: "Architecture & Shopping", activity: "Shopping & Architecture Stroll", notes: "Italy's oldest shopping gallery; great for a coffee stop. Same piazza as Duomo.", status: "planning" },
+          { dep: "15:00", arr: "18:00", travellers: "Son · Dad · Mom", from: "Galleria Area", to: "Quadrilatero della Moda", type: "Shopping", activity: "Luxury Shopping — Montenapoleone", notes: "High-end fashion district; great for window shopping. 15 min walk from Galleria.", status: "planning" },
+        ]
+      },
+      {
+        date: "Thu 29 Oct 2026",
+        desc: "Da Vinci & Castello — Full Day",
+        items: [
+          { dep: "09:00", arr: "11:00", travellers: "Son · Dad · Mom", from: "Hotel", to: "Santa Maria delle Grazie", type: "Art & Culture", activity: "Da Vinci's \"The Last Supper\"", notes: "Critical: Must book tickets months in advance. Time slots fill up fast — book immediately.", status: "critical" },
+          { dep: "11:30", arr: "13:00", travellers: "Son · Dad · Mom", from: "Santa Maria delle Grazie", to: "Sforzesco Castle", type: "History & Parks", activity: "Sforzesco Castle & Parco Sempione", notes: "5-min walk from Last Supper. Massive fortress; courtyards are free to enter.", status: "planning" },
+          { dep: "13:00", arr: "14:30", travellers: "Son · Dad · Mom", from: "Sforzesco Castle", to: "Parco Sempione", type: "Leisure", activity: "Lunch & Parco Sempione Stroll", notes: "Relax in the park behind the castle after a morning of museums.", status: "planning" },
+        ]
+      },
+      {
+        date: "Fri 30 Oct 2026",
+        desc: "Lake Como — Full Day Trip",
+        items: [
+          { dep: "08:00", arr: "09:15", travellers: "Son · Dad · Mom", from: "Milano Centrale", to: "Varenna-Esino", type: "Day Trip", activity: "Train to Varenna-Esino", notes: "Take early train from Milano Centrale. Journey ~1h15m. Full day required.", status: "planning" },
+          { dep: "09:30", arr: "12:30", travellers: "Son · Dad · Mom", from: "Varenna", to: "Bellagio", type: "Day Trip", activity: "Ferry to Bellagio & Explore", notes: "Take ferry from Varenna to Bellagio. Walk the village, enjoy the lake views.", status: "planning" },
+          { dep: "13:00", arr: "14:30", travellers: "Son · Dad · Mom", from: "Bellagio", to: "Bellagio", type: "Dining", activity: "Lunch in Bellagio", notes: "Lakeside restaurants with stunning views. Try risotto or fresh lake fish.", status: "planning" },
+          { dep: "16:00", arr: "17:15", travellers: "Son · Dad · Mom", from: "Varenna-Esino", to: "Milano Centrale", type: "Travel", activity: "Return Train to Milan", notes: "Allow buffer time for ferry back to Varenna before catching train.", status: "planning" },
+        ]
+      },
+      {
+        date: "Sat 31 Oct 2026",
+        desc: "Brera & Art — Last Full Day",
+        items: [
+          { dep: "09:30", arr: "11:00", travellers: "Son · Dad · Mom", from: "Hotel", to: "Brera District", type: "Leisure", activity: "Brera Neighborhood Morning Walk", notes: "Milan's most charming artistic neighborhood. Great for coffee and browsing galleries.", status: "planning" },
+          { dep: "11:00", arr: "13:30", travellers: "Son · Dad · Mom", from: "Brera District", to: "Pinacoteca di Brera", type: "Fine Art", activity: "Pinacoteca di Brera — Renaissance Art", notes: "One of Italy's finest art galleries. Allow 2 hours for a comfortable visit.", status: "planning" },
+          { dep: "13:30", arr: "15:00", travellers: "Son · Dad · Mom", from: "Pinacoteca di Brera", to: "Brera", type: "Dining", activity: "Lunch in Brera", notes: "Many excellent trattorias in the neighborhood. Last relaxed meal in Milan.", status: "planning" },
+          { dep: "15:30", arr: "18:00", travellers: "Son · Dad · Mom", from: "Brera", to: "Milan Center", type: "Leisure", activity: "Free Afternoon — Last Shopping & Souvenirs", notes: "Final afternoon to revisit favorites or pick up last-minute souvenirs before departure day.", status: "planning" },
+        ]
+      }
+    ]
+  }
+];
+
+const container = document.getElementById('sections');
+
+itinerary.forEach(city => {
+  const citySection = document.createElement('div');
+  citySection.className = 'city-section';
+  citySection.innerHTML = `
+    <div class="city-heading">
+      <span class="city-flag">${city.flag}</span>
+      <h2>${city.city}</h2>
+      <span class="city-dates-range">${city.dateRange}</span>
+    </div>
+  `;
+
+  city.days.forEach(day => {
+    const group = document.createElement('div');
+    group.className = 'date-group';
+    group.innerHTML = `
+      <div class="date-strip">
+        <div class="date-pill ${city.color}">📅 ${day.date}</div>
+        <span class="day-description">${day.desc}</span>
+        <div class="date-divider"></div>
+      </div>
+    `;
+
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+
+    day.items.forEach((item, i) => {
+      const isFlightCard = item.type === 'Flight' || item.type === 'Travel';
+      let badge = '';
+      if (item.status === 'critical') badge = '<span class="priority-badge">⚠ Book Ahead</span>';
+      else if (item.status === 'not-booked') badge = '<span class="badge not-booked">Not Booked</span>';
+      else if (item.status === 'booked') badge = '<span class="badge booked">✓ Booked</span>';
+      else badge = '<span class="badge">Planning</span>';
+
+      const timeDisplay = (item.dep !== '—' || item.arr !== '—')
+        ? `<div class="time-row">${item.dep} <span class="sep">→</span> ${item.arr}</div>`
+        : '';
+
+      grid.innerHTML += `
+        <div class="card${isFlightCard ? ' flight' : ''}" style="animation-delay:${0.04 + i * 0.05}s">
+          <div class="card-accent"></div>
+          <div class="card-body">
+            ${timeDisplay}
+            <div class="card-type">${item.type}</div>
+            <div class="card-title">${item.to}</div>
+            <div class="card-subtitle">${item.activity}</div>
+            <div class="route">
+              <span class="route-from">${item.from}</span>
+              <span class="route-arrow">→</span>
+              <span class="route-to">${item.to}</span>
+            </div>
+            <div class="notes">${item.notes}</div>
+            <div class="card-footer">
+              ${badge}
+              <span class="traveller-tag">${item.travellers}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    group.appendChild(grid);
+    citySection.appendChild(group);
+  });
+
+  container.appendChild(citySection);
+});
+</script>
+</body>
+</html>
