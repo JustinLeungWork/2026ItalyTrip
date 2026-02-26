@@ -11,7 +11,7 @@
   body {
     background: white;
     color: black;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'DM Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
     min-height: 100vh;
     padding: 36px 20px 80px;
     max-width: 900px;
@@ -21,6 +21,7 @@
   header {
     text-align: center;
     margin-bottom: 36px;
+    position: relative;
   }
   header::before {
     content: '';
@@ -57,6 +58,31 @@
     letter-spacing: 0.1em;
   }
   .travellers span { color: white; }
+
+  /* Language toggle */
+  .lang-toggle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    border: 1.5px solid #333;
+    border-radius: 100px;
+    overflow: hidden;
+  }
+  .lang-btn {
+    padding: 5px 13px;
+    cursor: pointer;
+    background: white;
+    color: #555;
+    border: none;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    transition: background 0.15s, color 0.15s;
+  }
+  .lang-btn.active { background: black; color: white; }
+  .lang-btn:hover:not(.active) { background: #f0f0f0; }
 
   /* Summary bar */
   .summary {
@@ -255,6 +281,7 @@
     .card-footer { flex-direction: row; align-items: center; justify-content: space-between; margin-top: 4px; }
     .city-dates-range { display: none; }
     .summary-chip { min-width: 120px; }
+    .lang-toggle { top: -8px; }
   }
 
   @media print {
@@ -264,257 +291,820 @@
     .date-group { page-break-inside: avoid; }
     .city-section { page-break-before: always; }
     .city-section:first-child { page-break-before: avoid; }
+    .lang-toggle { display: none; }
   }
 </style>
 </head>
 <body>
 
 <header>
-  <p class="trip-label">Travel Itinerary · October – November 2026</p>
+  <div class="lang-toggle">
+    <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" id="btn-zh" onclick="setLang('zh')">中</button>
+  </div>
+  <p class="trip-label" id="trip-label">Travel Itinerary · October – November 2026</p>
   <h1>Roma &amp; <em>Milano</em></h1>
-  <div class="travellers">✦ <span>Son · Dad · Mom</span> ✦</div>
+  <div class="travellers">✦ <span id="travellers-text">Son · Dad · Mom</span> ✦</div>
 </header>
 
-<div class="summary">
-  <div class="summary-chip"><div class="label">Trip Duration</div><div class="value">15 Oct – 1 Nov</div></div>
-  <div class="summary-chip"><div class="label">Rome</div><div class="value">15 – 18 Oct · 4 days</div></div>
-  <div class="summary-chip"><div class="label">Naples</div><div class="value">19 – 20 Oct · 2 days</div></div>
-  <div class="summary-chip"><div class="label">Milan</div><div class="value">27 Oct – 1 Nov · 5 days</div></div>
-  <div class="summary-chip"><div class="label">Travellers</div><div class="value">Son · Dad · Mom</div></div>
+<div class="summary" id="summary-bar">
+  <div class="summary-chip"><div class="label" data-en="Trip Duration" data-zh="旅行时长">Trip Duration</div><div class="value">15 Oct – 1 Nov</div></div>
+  <div class="summary-chip"><div class="label" data-en="Rome" data-zh="罗马">Rome</div><div class="value">15 – 18 Oct · 4 days</div></div>
+  <div class="summary-chip"><div class="label" data-en="Naples" data-zh="那不勒斯">Naples</div><div class="value">19 – 20 Oct · 2 days</div></div>
+  <div class="summary-chip"><div class="label" data-en="Milan" data-zh="米兰">Milan</div><div class="value">27 Oct – 1 Nov · 5 days</div></div>
+  <div class="summary-chip"><div class="label" data-en="Travellers" data-zh="旅行者">Travellers</div><div class="value" id="summary-travellers">Son · Dad · Mom</div></div>
 </div>
 
 <div id="sections"></div>
 
-<div class="legend">
-  <div class="legend-item"><div class="legend-dot" style="background:#111"></div> Book ahead</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#e8e8e8;border:1.5px solid #333"></div> Booked</div>
-  <div class="legend-item"><div class="legend-dot" style="background:white;border:1.5px solid #555"></div> Planning</div>
-  <div class="legend-item"><div class="legend-dot" style="background:white;border:1.5px dashed #555"></div> Not booked</div>
+<div class="legend" id="legend-bar">
+  <div class="legend-item"><div class="legend-dot" style="background:#111"></div> <span data-en="Book ahead" data-zh="提前预订">Book ahead</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#e8e8e8;border:1.5px solid #333"></div> <span data-en="Booked" data-zh="已预订">Booked</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:white;border:1.5px solid #555"></div> <span data-en="Planning" data-zh="计划中">Planning</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:white;border:1.5px dashed #555"></div> <span data-en="Not booked" data-zh="未预订">Not booked</span></div>
 </div>
 
 <script>
+let lang = 'en';
+
+const typeZh = {
+  'Flight': '航班', 'Travel': '交通', 'Transfer': '接送', 'Rest': '休息',
+  'Train': '火车', 'Leisure': '休闲', 'Sightseeing': '观光', 'Landmark': '地标',
+  'Dining': '用餐', 'History': '历史', 'Art & Religion': '艺术与宗教',
+  'Museum': '博物馆', 'Art & Culture': '艺术文化', 'Fine Art': '艺术',
+  'Day Trip': '一日游', 'History & Parks': '历史与公园',
+  'Architecture & Shopping': '建筑与购物', 'Shopping': '购物', 'Food & Drink': '美食与饮品'
+};
+
 const itinerary = [
   {
-    city: "Roma",
+    city: "Roma", cityZh: "罗马",
     flag: "🏛️",
     dateRange: "15 – 18 Oct 2026",
     color: "rome",
     days: [
       {
-        date: "Thu 15 Oct 2026",
-        desc: "Arrival & Orientation — Dad & Mom",
+        date: "Thu 15 Oct 2026", dateZh: "2026年10月15日（周四）",
+        desc: "Arrival & Orientation — Dad & Mom", descZh: "抵达与适应 — 爸爸和妈妈",
         items: [
-          { dep: "00:30", arr: "07:35", travellers: "Dad · Mom", from: "Hong Kong", to: "Fiumicino Aeroporto", type: "Flight", activity: "CX293 — Hong Kong → Rome", notes: "Overnight flight; Dad & Mom depart HKG 14 Oct night, arrive Rome morning.", status: "booked" },
-          { dep: "08:30", arr: "09:30", travellers: "Dad · Mom", from: "Fiumicino Aeroporto", to: "Hotel", type: "Transfer", activity: "Private Airport Transfer & Bag Drop", notes: "Safe and easy transit to avoid stress.", status: "planning" },
-          { dep: "12:00", arr: "13:30", travellers: "Dad · Mom", from: "Hotel Area", to: "Hotel Area", type: "Leisure", activity: "Light Lunch & Neighborhood Walk", notes: "Get some sunlight to help with jet lag.", status: "planning" },
-          { dep: "14:00", arr: "16:00", travellers: "Dad · Mom", from: "Hotel", to: "Hotel", type: "Rest", activity: "Check-in & Power Nap", notes: "Keep nap under 2 hours to ensure sleep at night.", status: "planning" },
-          { dep: "16:30", arr: "18:30", travellers: "Dad · Mom", from: "Hotel", to: "Rome Center", type: "Sightseeing", activity: "Hop-On Hop-Off Bus Tour", notes: "Zero-effort sightseeing before an early dinner.", status: "planning" },
+          {
+            dep: "00:30", arr: "07:35", travellers: "Dad · Mom", travellersZh: "爸爸 · 妈妈",
+            from: "Hong Kong", fromZh: "香港",
+            to: "Fiumicino Aeroporto", toZh: "菲乌米奇诺机场",
+            type: "Flight",
+            activity: "CX293 — Hong Kong → Rome", activityZh: "CX293航班 — 香港 → 罗马",
+            notes: "Overnight flight; Dad & Mom depart HKG 14 Oct night, arrive Rome morning.",
+            notesZh: "夜班机；爸爸妈妈于10月14日夜间从香港出发，清晨抵达罗马。",
+            status: "booked"
+          },
+          {
+            dep: "08:30", arr: "09:30", travellers: "Dad · Mom", travellersZh: "爸爸 · 妈妈",
+            from: "Fiumicino Aeroporto", fromZh: "菲乌米奇诺机场",
+            to: "Hotel", toZh: "酒店",
+            type: "Transfer",
+            activity: "Private Airport Transfer & Bag Drop", activityZh: "专车接机与行李托运",
+            notes: "Safe and easy transit to avoid stress.",
+            notesZh: "安全便捷的交通安排，减轻旅途疲劳。",
+            status: "planning"
+          },
+          {
+            dep: "12:00", arr: "13:30", travellers: "Dad · Mom", travellersZh: "爸爸 · 妈妈",
+            from: "Hotel Area", fromZh: "酒店附近",
+            to: "Hotel Area", toZh: "酒店附近",
+            type: "Leisure",
+            activity: "Light Lunch & Neighborhood Walk", activityZh: "轻食午餐与周边漫步",
+            notes: "Get some sunlight to help with jet lag.",
+            notesZh: "晒晒太阳，有助于缓解时差。",
+            status: "planning"
+          },
+          {
+            dep: "14:00", arr: "16:00", travellers: "Dad · Mom", travellersZh: "爸爸 · 妈妈",
+            from: "Hotel", fromZh: "酒店",
+            to: "Hotel", toZh: "酒店",
+            type: "Rest",
+            activity: "Check-in & Power Nap", activityZh: "办理入住与小憩",
+            notes: "Keep nap under 2 hours to ensure sleep at night.",
+            notesZh: "小睡不超过2小时，以确保夜间正常入睡。",
+            status: "planning"
+          },
+          {
+            dep: "16:30", arr: "18:30", travellers: "Dad · Mom", travellersZh: "爸爸 · 妈妈",
+            from: "Hotel", fromZh: "酒店",
+            to: "Rome Center", toZh: "罗马市中心",
+            type: "Sightseeing",
+            activity: "Hop-On Hop-Off Bus Tour", activityZh: "随上随下观光巴士游",
+            notes: "Zero-effort sightseeing before an early dinner.",
+            notesZh: "毫不费力地欣赏城市风光，早餐前轻松观光。",
+            status: "planning"
+          },
         ]
       },
       {
-        date: "Fri 16 Oct 2026",
-        desc: "Ancient Rome — Dad & Mom",
+        date: "Fri 16 Oct 2026", dateZh: "2026年10月16日（周五）",
+        desc: "Ancient Rome — Dad & Mom", descZh: "古罗马之旅 — 爸爸和妈妈",
         items: [
-          { dep: "09:30", arr: "13:00", travellers: "Dad · Mom", from: "Hotel", to: "Colosseum", type: "Landmark", activity: "Colosseum (Inside & Exterior)", notes: "Slow-paced morning dedicated solely to the amphitheater.", status: "planning" },
-          { dep: "13:00", arr: "15:00", travellers: "Dad · Mom", from: "Colosseum Area", to: "Trattoria Luzzi", type: "Dining", activity: "Lunch at Trattoria Luzzi", notes: "2-hour break to sit, rest feet, and enjoy authentic Roman food.", status: "planning" },
-          { dep: "15:00", arr: "17:30", travellers: "Dad · Mom", from: "Restaurant", to: "Roman Forum & Palatine Hill", type: "History", activity: "Roman Forum & Palatine Hill", notes: "Leisurely afternoon exploring the ruins with plenty of spots to sit and rest.", status: "planning" },
+          {
+            dep: "09:30", arr: "13:00", travellers: "Dad · Mom", travellersZh: "爸爸 · 妈妈",
+            from: "Hotel", fromZh: "酒店",
+            to: "Colosseum", toZh: "竞技场",
+            type: "Landmark",
+            activity: "Colosseum (Inside & Exterior)", activityZh: "竞技场（内外参观）",
+            notes: "Slow-paced morning dedicated solely to the amphitheater.",
+            notesZh: "轻松的上午，专心游览这座圆形剧场。",
+            status: "planning"
+          },
+          {
+            dep: "13:00", arr: "15:00", travellers: "Dad · Mom", travellersZh: "爸爸 · 妈妈",
+            from: "Colosseum Area", fromZh: "竞技场附近",
+            to: "Trattoria Luzzi", toZh: "Trattoria Luzzi",
+            type: "Dining",
+            activity: "Lunch at Trattoria Luzzi", activityZh: "Trattoria Luzzi餐厅午餐",
+            notes: "2-hour break to sit, rest feet, and enjoy authentic Roman food.",
+            notesZh: "2小时用餐时间，休息双腿，品尝正宗罗马美食。",
+            status: "planning"
+          },
+          {
+            dep: "15:00", arr: "17:30", travellers: "Dad · Mom", travellersZh: "爸爸 · 妈妈",
+            from: "Restaurant", fromZh: "餐厅",
+            to: "Roman Forum & Palatine Hill", toZh: "古罗马广场与帕拉蒂尼山",
+            type: "History",
+            activity: "Roman Forum & Palatine Hill", activityZh: "古罗马广场与帕拉蒂尼山",
+            notes: "Leisurely afternoon exploring the ruins with plenty of spots to sit and rest.",
+            notesZh: "悠闲下午探索古迹，有充足座位可供休息。",
+            status: "planning"
+          },
         ]
       },
       {
-        date: "Sat 17 Oct 2026",
-        desc: "Son Arrives · Vatican Day",
+        date: "Sat 17 Oct 2026", dateZh: "2026年10月17日（周六）",
+        desc: "Son Arrives · Vatican Day", descZh: "儿子抵达 · 梵蒂冈之旅",
         items: [
-          { dep: "—", arr: "Morning", travellers: "Son", from: "—", to: "Rome", type: "Flight", activity: "Son's Flight Arrival", notes: "Arriving morning of 17 Oct; flight details TBC.", status: "not-booked" },
-          { dep: "10:00", arr: "13:00", travellers: "Son · Dad · Mom", from: "Hotel", to: "Vatican City", type: "Art & Religion", activity: "Vatican Museums & Sistine Chapel", notes: "Saturday will be busy; skip-the-line tickets must be booked in advance.", status: "critical" },
-          { dep: "13:15", arr: "14:45", travellers: "Son · Dad · Mom", from: "Vatican City", to: "Tonnarello San Pietro", type: "Dining", activity: "Lunch at Tonnarello San Pietro", notes: "Traditional Roman pastas in generous portions.", status: "planning" },
-          { dep: "15:00", arr: "16:30", travellers: "Son · Dad · Mom", from: "Restaurant", to: "Saint Peter's Basilica", type: "Landmark", activity: "Saint Peter's Basilica & Square", notes: "Entry is free, but security line can take time. Shoulders and knees must be covered.", status: "planning" },
+          {
+            dep: "—", arr: "Morning", travellers: "Son", travellersZh: "儿子",
+            from: "—", fromZh: "—",
+            to: "Rome", toZh: "罗马",
+            type: "Flight",
+            activity: "Son's Flight Arrival", activityZh: "儿子航班抵达",
+            notes: "Arriving morning of 17 Oct; flight details TBC.",
+            notesZh: "10月17日上午抵达；具体航班待定。",
+            status: "not-booked"
+          },
+          {
+            dep: "10:00", arr: "13:00", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Hotel", fromZh: "酒店",
+            to: "Vatican City", toZh: "梵蒂冈城",
+            type: "Art & Religion",
+            activity: "Vatican Museums & Sistine Chapel", activityZh: "梵蒂冈博物馆与西斯廷礼拜堂",
+            notes: "Saturday will be busy; skip-the-line tickets must be booked in advance.",
+            notesZh: "周六人流较多；必须提前购买免排队门票。",
+            status: "critical"
+          },
+          {
+            dep: "13:15", arr: "14:45", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Vatican City", fromZh: "梵蒂冈城",
+            to: "Tonnarello San Pietro", toZh: "Tonnarello San Pietro",
+            type: "Dining",
+            activity: "Lunch at Tonnarello San Pietro", activityZh: "圣彼得广场Tonnarello餐厅午餐",
+            notes: "Traditional Roman pastas in generous portions.",
+            notesZh: "分量充足的传统罗马意面。",
+            status: "planning"
+          },
+          {
+            dep: "15:00", arr: "16:30", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Restaurant", fromZh: "餐厅",
+            to: "Saint Peter's Basilica", toZh: "圣彼得大教堂",
+            type: "Landmark",
+            activity: "Saint Peter's Basilica & Square", activityZh: "圣彼得大教堂与广场",
+            notes: "Entry is free, but security line can take time. Shoulders and knees must be covered.",
+            notesZh: "入场免费，但安检队伍较长。需遮住肩膀和膝盖。",
+            status: "planning"
+          },
         ]
       },
       {
-        date: "Sun 18 Oct 2026",
-        desc: "Historic Center, Trastevere & Farewell Dinner",
+        date: "Sun 18 Oct 2026", dateZh: "2026年10月18日（周日）",
+        desc: "Historic Center, Trastevere & Farewell Dinner", descZh: "历史中心、特拉斯提弗列与告别晚宴",
         items: [
-          { dep: "07:00", arr: "07:30", travellers: "Son · Dad · Mom", from: "Hotel", to: "Hotel", type: "Leisure", activity: "Early Departure", notes: "Light breakfast before heading out.", status: "planning" },
-          { dep: "07:30", arr: "08:30", travellers: "Son · Dad · Mom", from: "Hotel", to: "Trevi Fountain", type: "Sightseeing", activity: "Trevi Fountain Visit", notes: "Best before 8am — far fewer crowds and beautiful morning light for photos.", status: "planning" },
-          { dep: "08:30", arr: "09:00", travellers: "Son · Dad · Mom", from: "Trevi Fountain", to: "Pantheon Area", type: "Sightseeing", activity: "Pantheon Exterior & Piazza della Rotonda", notes: "Pantheon opens at 9am — arrive early to admire the exterior and grab coffee at the piazza.", status: "planning" },
-          { dep: "09:00", arr: "10:00", travellers: "Son · Dad · Mom", from: "Pantheon Area", to: "Pantheon", type: "Landmark", activity: "Pantheon Interior Visit", notes: "One of the best-preserved ancient buildings in the world. Small entry fee.", status: "planning" },
-          { dep: "10:00", arr: "11:00", travellers: "Son · Dad · Mom", from: "Pantheon", to: "Piazza Navona", type: "Sightseeing", activity: "Walk to Piazza Navona", notes: "5-min walk from Pantheon. Baroque piazza with Bernini's Fountain of the Four Rivers. Lively on Sundays.", status: "planning" },
-          { dep: "11:00", arr: "12:30", travellers: "Son · Dad · Mom", from: "Piazza Navona", to: "Piazza Navona Area", type: "Leisure", activity: "Coffee & Rest Break", notes: "Sit at a café and rest feet before afternoon leg.", status: "planning" },
-          { dep: "12:30", arr: "14:30", travellers: "Son · Dad · Mom", from: "Piazza Navona Area", to: "Trastevere", type: "Dining", activity: "Lunch in Trastevere", notes: "Cross the river — 20-min walk or short taxi. Best neighbourhood for authentic Roman Sunday lunch. Recommend Da Enzo al 29.", status: "planning" },
-          { dep: "14:30", arr: "16:00", travellers: "Son · Dad · Mom", from: "Trastevere", to: "Trastevere", type: "Leisure", activity: "Explore Trastevere Streets", notes: "Cobblestone streets and medieval charm. Very walkable and low effort — great pace for parents.", status: "planning" },
-          { dep: "16:00", arr: "17:30", travellers: "Son · Dad · Mom", from: "Trastevere", to: "Gianicolo Hill", type: "Sightseeing", activity: "Gianicolo Hill Panoramic View", notes: "Short uphill walk or taxi from Trastevere. Best panoramic view of Rome — ideal late afternoon light.", status: "planning" },
-          { dep: "17:30", arr: "19:30", travellers: "Son · Dad · Mom", from: "Gianicolo Hill", to: "Hotel", type: "Rest", activity: "Return to Hotel & Rest", notes: "Rest before farewell dinner.", status: "planning" },
-          { dep: "19:30", arr: "21:30", travellers: "Son · Dad · Mom", from: "Hotel", to: "Trastevere / Pantheon Area", type: "Dining", activity: "Farewell Dinner in Rome", notes: "Return to Trastevere or dine near Pantheon. Recommend Il Sorpasso or Tonnarello.", status: "planning" },
+          {
+            dep: "07:00", arr: "07:30", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Hotel", fromZh: "酒店",
+            to: "Hotel", toZh: "酒店",
+            type: "Leisure",
+            activity: "Early Departure", activityZh: "早出发",
+            notes: "Light breakfast before heading out.",
+            notesZh: "出发前享用轻食早餐。",
+            status: "planning"
+          },
+          {
+            dep: "07:30", arr: "08:30", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Hotel", fromZh: "酒店",
+            to: "Trevi Fountain", toZh: "许愿池",
+            type: "Sightseeing",
+            activity: "Trevi Fountain Visit", activityZh: "许愿池参观",
+            notes: "Best before 8am — far fewer crowds and beautiful morning light for photos.",
+            notesZh: "上午8点前最佳——人少，清晨光线美丽，适合拍照。",
+            status: "planning"
+          },
+          {
+            dep: "08:30", arr: "09:00", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Trevi Fountain", fromZh: "许愿池",
+            to: "Pantheon Area", toZh: "万神庙附近",
+            type: "Sightseeing",
+            activity: "Pantheon Exterior & Piazza della Rotonda", activityZh: "万神庙外观与罗通达广场",
+            notes: "Pantheon opens at 9am — arrive early to admire the exterior and grab coffee at the piazza.",
+            notesZh: "万神庙上午9点开放——提前到达欣赏外观并在广场喝咖啡。",
+            status: "planning"
+          },
+          {
+            dep: "09:00", arr: "10:00", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Pantheon Area", fromZh: "万神庙附近",
+            to: "Pantheon", toZh: "万神庙",
+            type: "Landmark",
+            activity: "Pantheon Interior Visit", activityZh: "万神庙内部参观",
+            notes: "One of the best-preserved ancient buildings in the world. Small entry fee.",
+            notesZh: "世界上保存最完好的古建筑之一，需购买小额门票。",
+            status: "planning"
+          },
+          {
+            dep: "10:00", arr: "11:00", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Pantheon", fromZh: "万神庙",
+            to: "Piazza Navona", toZh: "纳沃纳广场",
+            type: "Sightseeing",
+            activity: "Walk to Piazza Navona", activityZh: "步行至纳沃纳广场",
+            notes: "5-min walk from Pantheon. Baroque piazza with Bernini's Fountain of the Four Rivers. Lively on Sundays.",
+            notesZh: "距万神庙步行5分钟。巴洛克广场，有贝尼尼的四河喷泉。周日热闹非凡。",
+            status: "planning"
+          },
+          {
+            dep: "11:00", arr: "12:30", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Piazza Navona", fromZh: "纳沃纳广场",
+            to: "Piazza Navona Area", toZh: "纳沃纳广场附近",
+            type: "Leisure",
+            activity: "Coffee & Rest Break", activityZh: "咖啡与休息",
+            notes: "Sit at a café and rest feet before afternoon leg.",
+            notesZh: "坐在咖啡馆休息双腿，为下午行程储备体力。",
+            status: "planning"
+          },
+          {
+            dep: "12:30", arr: "14:30", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Piazza Navona Area", fromZh: "纳沃纳广场附近",
+            to: "Trastevere", toZh: "特拉斯提弗列",
+            type: "Dining",
+            activity: "Lunch in Trastevere", activityZh: "特拉斯提弗列午餐",
+            notes: "Cross the river — 20-min walk or short taxi. Best neighbourhood for authentic Roman Sunday lunch. Recommend Da Enzo al 29.",
+            notesZh: "穿越台伯河——步行20分钟或乘出租车。周日正宗罗马午餐最佳去处。推荐Da Enzo al 29。",
+            status: "planning"
+          },
+          {
+            dep: "14:30", arr: "16:00", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Trastevere", fromZh: "特拉斯提弗列",
+            to: "Trastevere", toZh: "特拉斯提弗列",
+            type: "Leisure",
+            activity: "Explore Trastevere Streets", activityZh: "漫步特拉斯提弗列街道",
+            notes: "Cobblestone streets and medieval charm. Very walkable and low effort — great pace for parents.",
+            notesZh: "鹅卵石街道与中世纪风情。适合漫步，节奏轻松，非常适合父母。",
+            status: "planning"
+          },
+          {
+            dep: "16:00", arr: "17:30", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Trastevere", fromZh: "特拉斯提弗列",
+            to: "Gianicolo Hill", toZh: "贾尼科洛山",
+            type: "Sightseeing",
+            activity: "Gianicolo Hill Panoramic View", activityZh: "贾尼科洛山全景",
+            notes: "Short uphill walk or taxi from Trastevere. Best panoramic view of Rome — ideal late afternoon light.",
+            notesZh: "从特拉斯提弗列步行上坡或乘出租车。罗马最佳全景——下午光线最美。",
+            status: "planning"
+          },
+          {
+            dep: "17:30", arr: "19:30", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Gianicolo Hill", fromZh: "贾尼科洛山",
+            to: "Hotel", toZh: "酒店",
+            type: "Rest",
+            activity: "Return to Hotel & Rest", activityZh: "返回酒店休息",
+            notes: "Rest before farewell dinner.",
+            notesZh: "告别晚宴前休息。",
+            status: "planning"
+          },
+          {
+            dep: "19:30", arr: "21:30", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Hotel", fromZh: "酒店",
+            to: "Trastevere / Pantheon Area", toZh: "特拉斯提弗列／万神庙附近",
+            type: "Dining",
+            activity: "Farewell Dinner in Rome", activityZh: "罗马告别晚宴",
+            notes: "Return to Trastevere or dine near Pantheon. Recommend Il Sorpasso or Tonnarello.",
+            notesZh: "返回特拉斯提弗列或在万神庙附近用餐。推荐Il Sorpasso或Tonnarello。",
+            status: "planning"
+          },
         ]
       }
     ]
   },
   {
-    city: "Napoli",
+    city: "Napoli", cityZh: "那不勒斯",
     flag: "🌋",
     dateRange: "19 – 20 Oct 2026",
     color: "naples",
     days: [
       {
-        date: "Mon 19 Oct 2026",
-        desc: "Rome → Naples & City Exploration",
+        date: "Mon 19 Oct 2026", dateZh: "2026年10月19日（周一）",
+        desc: "Rome → Naples & City Exploration", descZh: "罗马→那不勒斯 & 城市探索",
         items: [
-          { dep: "09:00", arr: "09:30", travellers: "Son · Dad · Mom", from: "Hotel", to: "Roma Termini", type: "Travel", activity: "Check Out & Travel to Station", notes: "Allow 30 min to get to Termini with luggage.", status: "planning" },
-          { dep: "10:00", arr: "11:10", travellers: "Son · Dad · Mom", from: "Roma Termini", to: "Napoli Centrale", type: "Train", activity: "Frecciarossa High Speed Train", notes: "Book in advance. ~€30-60pp. Direct 1hr 10min.", status: "not-booked" },
-          { dep: "11:30", arr: "12:30", travellers: "Son · Dad · Mom", from: "Napoli Centrale", to: "Hotel Naples", type: "Transfer", activity: "Transfer & Hotel Check-in", notes: "Drop luggage and freshen up before afternoon.", status: "planning" },
-          { dep: "13:00", arr: "14:30", travellers: "Son · Dad · Mom", from: "Hotel", to: "Naples City Center", type: "Dining", activity: "Lunch in Naples", notes: "Try local pizza — Naples is the birthplace. Recommend Sorbillo or Di Matteo.", status: "planning" },
-          { dep: "15:00", arr: "17:30", travellers: "Son · Dad · Mom", from: "Naples City Center", to: "Naples Archaeological Museum", type: "Museum", activity: "Naples Archaeological Museum — Pompeii Artifacts", notes: "Must-see before Pompeii. Book tickets in advance. Allow 2-3 hours.", status: "planning" },
-          { dep: "17:30", arr: "19:00", travellers: "Son · Dad · Mom", from: "Museum", to: "Naples Waterfront", type: "Leisure", activity: "Evening City Walk — Lungomare", notes: "Flat seafront promenade. Easy walk with great views of the bay and Vesuvius.", status: "planning" },
-          { dep: "19:30", arr: "20:00", travellers: "Son · Dad · Mom", from: "Lungomare", to: "Castel dell'Ovo", type: "Sightseeing", activity: "Castel dell'Ovo Night View", notes: "Free to walk around the exterior. Stunning bay and city lights at night.", status: "planning" },
-          { dep: "20:30", arr: "22:30", travellers: "Son · Dad · Mom", from: "Castel dell'Ovo", to: "Nearby Restaurant", type: "Dining", activity: "Dinner in Naples", notes: "Seafood recommended — try Ristorante La Bersagliera near the castle.", status: "planning" },
+          {
+            dep: "09:00", arr: "09:30", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Hotel", fromZh: "酒店",
+            to: "Roma Termini", toZh: "罗马特米尼站",
+            type: "Travel",
+            activity: "Check Out & Travel to Station", activityZh: "退房并前往车站",
+            notes: "Allow 30 min to get to Termini with luggage.",
+            notesZh: "携带行李前往特米尼站，预留30分钟。",
+            status: "planning"
+          },
+          {
+            dep: "10:00", arr: "11:10", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Roma Termini", fromZh: "罗马特米尼站",
+            to: "Napoli Centrale", toZh: "那不勒斯中央站",
+            type: "Train",
+            activity: "Frecciarossa High Speed Train", activityZh: "法切罗萨高铁",
+            notes: "Book in advance. ~€30-60pp. Direct 1hr 10min.",
+            notesZh: "提前预订。每人约30-60欧。直达，约1小时10分钟。",
+            status: "not-booked"
+          },
+          {
+            dep: "11:30", arr: "12:30", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Napoli Centrale", fromZh: "那不勒斯中央站",
+            to: "Hotel Naples", toZh: "那不勒斯酒店",
+            type: "Transfer",
+            activity: "Transfer & Hotel Check-in", activityZh: "接送与办理入住",
+            notes: "Drop luggage and freshen up before afternoon.",
+            notesZh: "放下行李，整理后享用下午时光。",
+            status: "planning"
+          },
+          {
+            dep: "13:00", arr: "14:30", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Hotel", fromZh: "酒店",
+            to: "Naples City Center", toZh: "那不勒斯市中心",
+            type: "Dining",
+            activity: "Lunch in Naples", activityZh: "那不勒斯午餐",
+            notes: "Try local pizza — Naples is the birthplace. Recommend Sorbillo or Di Matteo.",
+            notesZh: "尝试当地披萨——那不勒斯是披萨发源地。推荐Sorbillo或Di Matteo。",
+            status: "planning"
+          },
+          {
+            dep: "15:00", arr: "17:30", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Naples City Center", fromZh: "那不勒斯市中心",
+            to: "Naples Archaeological Museum", toZh: "那不勒斯考古博物馆",
+            type: "Museum",
+            activity: "Naples Archaeological Museum — Pompeii Artifacts", activityZh: "那不勒斯国家考古博物馆 — 庞贝文物",
+            notes: "Must-see before Pompeii. Book tickets in advance. Allow 2-3 hours.",
+            notesZh: "参观庞贝前必去之地。提前购票。建议游览2-3小时。",
+            status: "planning"
+          },
+          {
+            dep: "17:30", arr: "19:00", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Museum", fromZh: "博物馆",
+            to: "Naples Waterfront", toZh: "那不勒斯海滨",
+            type: "Leisure",
+            activity: "Evening City Walk — Lungomare", activityZh: "夜游龙戈马雷海滨",
+            notes: "Flat seafront promenade. Easy walk with great views of the bay and Vesuvius.",
+            notesZh: "平坦海滨长廊，轻松漫步，欣赏海湾与维苏威火山美景。",
+            status: "planning"
+          },
+          {
+            dep: "19:30", arr: "20:00", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Lungomare", fromZh: "龙戈马雷",
+            to: "Castel dell'Ovo", toZh: "卵石城堡",
+            type: "Sightseeing",
+            activity: "Castel dell'Ovo Night View", activityZh: "卵石城堡夜景",
+            notes: "Free to walk around the exterior. Stunning bay and city lights at night.",
+            notesZh: "可免费游览城堡外围。夜晚海湾与城市灯光尽收眼底。",
+            status: "planning"
+          },
+          {
+            dep: "20:30", arr: "22:30", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Castel dell'Ovo", fromZh: "卵石城堡",
+            to: "Nearby Restaurant", toZh: "附近餐厅",
+            type: "Dining",
+            activity: "Dinner in Naples", activityZh: "那不勒斯晚餐",
+            notes: "Seafood recommended — try Ristorante La Bersagliera near the castle.",
+            notesZh: "推荐海鲜——可尝试城堡附近的Ristorante La Bersagliera。",
+            status: "planning"
+          },
         ]
       },
       {
-        date: "Tue 20 Oct 2026",
-        desc: "Pompeii Day Trip",
+        date: "Tue 20 Oct 2026", dateZh: "2026年10月20日（周二）",
+        desc: "Pompeii Day Trip", descZh: "庞贝一日游",
         items: [
-          { dep: "07:45", arr: "08:00", travellers: "Son · Dad · Mom", from: "Hotel", to: "Napoli Porta Nolana", type: "Travel", activity: "Walk to Station", notes: "Napoli Porta Nolana is the main Circumvesuviana departure point.", status: "planning" },
-          { dep: "08:00", arr: "08:40", travellers: "Son · Dad · Mom", from: "Napoli Porta Nolana", to: "Pompeii Scavi - Villa dei Misteri", type: "Train", activity: "Circumvesuviana Train — Sorrento Line", notes: "~€3pp each way. Get off at Pompeii Scavi stop — directly at main entrance.", status: "planning" },
-          { dep: "09:00", arr: "13:30", travellers: "Son · Dad · Mom", from: "Pompeii Entrance", to: "Pompeii Archaeological Site", type: "Landmark", activity: "Pompeii Full Visit", notes: "Arrive at opening. Book tickets in advance. Allow 4-5 hours at comfortable pace for parents.", status: "planning" },
-          { dep: "13:30", arr: "14:30", travellers: "Son · Dad · Mom", from: "Pompeii Site", to: "Pompeii Town", type: "Dining", activity: "Lunch near Pompeii Entrance", notes: "Several restaurants near the site exit. Rest feet before return journey.", status: "planning" },
-          { dep: "15:00", arr: "15:40", travellers: "Son · Dad · Mom", from: "Pompeii Scavi", to: "Napoli Porta Nolana", type: "Train", activity: "Circumvesuviana Return Train", notes: "~€3pp. Trains run every 30 min — no need to pre-book.", status: "planning" },
-          { dep: "16:00", arr: "18:00", travellers: "Son · Dad · Mom", from: "Hotel", to: "Hotel", type: "Rest", activity: "Return Hotel & Rest", notes: "Full day on feet — parents will need a proper rest before dinner.", status: "planning" },
-          { dep: "19:30", arr: "22:00", travellers: "Son · Dad · Mom", from: "Hotel", to: "Naples City Center", type: "Dining", activity: "Final Naples Dinner", notes: "Explore Spaccanapoli street area for dinner. Lively neighbourhood in the evening.", status: "planning" },
+          {
+            dep: "07:45", arr: "08:00", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Hotel", fromZh: "酒店",
+            to: "Napoli Porta Nolana", toZh: "那不勒斯波尔塔诺拉纳站",
+            type: "Travel",
+            activity: "Walk to Station", activityZh: "步行前往车站",
+            notes: "Napoli Porta Nolana is the main Circumvesuviana departure point.",
+            notesZh: "Napoli Porta Nolana是环维苏威铁路的主要发车站。",
+            status: "planning"
+          },
+          {
+            dep: "08:00", arr: "08:40", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Napoli Porta Nolana", fromZh: "那不勒斯波尔塔诺拉纳站",
+            to: "Pompeii Scavi - Villa dei Misteri", toZh: "庞贝考古区-神秘别墅站",
+            type: "Train",
+            activity: "Circumvesuviana Train — Sorrento Line", activityZh: "环维苏威铁路 — 索伦托线",
+            notes: "~€3pp each way. Get off at Pompeii Scavi stop — directly at main entrance.",
+            notesZh: "每人约3欧元单程。在庞贝考古区站下车——直达主入口。",
+            status: "planning"
+          },
+          {
+            dep: "09:00", arr: "13:30", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Pompeii Entrance", fromZh: "庞贝入口",
+            to: "Pompeii Archaeological Site", toZh: "庞贝考古遗址",
+            type: "Landmark",
+            activity: "Pompeii Full Visit", activityZh: "庞贝全景游",
+            notes: "Arrive at opening. Book tickets in advance. Allow 4-5 hours at comfortable pace for parents.",
+            notesZh: "开门即入。提前购票。以舒适的节奏游览需4-5小时，适合父母。",
+            status: "planning"
+          },
+          {
+            dep: "13:30", arr: "14:30", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Pompeii Site", fromZh: "庞贝遗址",
+            to: "Pompeii Town", toZh: "庞贝镇",
+            type: "Dining",
+            activity: "Lunch near Pompeii Entrance", activityZh: "庞贝入口附近午餐",
+            notes: "Several restaurants near the site exit. Rest feet before return journey.",
+            notesZh: "遗址出口附近有多家餐厅。休息双腿再返程。",
+            status: "planning"
+          },
+          {
+            dep: "15:00", arr: "15:40", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Pompeii Scavi", fromZh: "庞贝考古区站",
+            to: "Napoli Porta Nolana", toZh: "那不勒斯波尔塔诺拉纳站",
+            type: "Train",
+            activity: "Circumvesuviana Return Train", activityZh: "环维苏威铁路返程",
+            notes: "~€3pp. Trains run every 30 min — no need to pre-book.",
+            notesZh: "约3欧元。每30分钟一班——无需提前预订。",
+            status: "planning"
+          },
+          {
+            dep: "16:00", arr: "18:00", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Hotel", fromZh: "酒店",
+            to: "Hotel", toZh: "酒店",
+            type: "Rest",
+            activity: "Return Hotel & Rest", activityZh: "返回酒店休息",
+            notes: "Full day on feet — parents will need a proper rest before dinner.",
+            notesZh: "全天步行——父母需要好好休息再吃晚饭。",
+            status: "planning"
+          },
+          {
+            dep: "19:30", arr: "22:00", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Hotel", fromZh: "酒店",
+            to: "Naples City Center", toZh: "那不勒斯市中心",
+            type: "Dining",
+            activity: "Final Naples Dinner", activityZh: "那不勒斯告别晚宴",
+            notes: "Explore Spaccanapoli street area for dinner. Lively neighbourhood in the evening.",
+            notesZh: "探索斯帕卡那不勒斯大街周边用餐。夜晚热闹非凡。",
+            status: "planning"
+          },
         ]
       }
     ]
   },
   {
-    city: "Milano",
+    city: "Milano", cityZh: "米兰",
     flag: "🏙️",
     dateRange: "27 Oct – 1 Nov 2026",
     color: "milan",
     days: [
       {
-        date: "Tue 27 Oct 2026",
-        desc: "Arrival Day — Easy Start",
+        date: "Tue 27 Oct 2026", dateZh: "2026年10月27日（周二）",
+        desc: "Arrival Day — Easy Start", descZh: "抵达日 — 轻松开始",
         items: [
-          { dep: "12:00", arr: "—", travellers: "Son · Dad · Mom", from: "Rome", to: "Milan", type: "Travel", activity: "Arrive Milan — Noon", notes: "Transport TBC. Check in and freshen up before afternoon.", status: "not-booked" },
-          { dep: "19:00", arr: "21:30", travellers: "Son · Dad · Mom", from: "Hotel", to: "Navigli", type: "Food & Drink", activity: "Canal District & Aperitivo", notes: "Perfect arrival evening — easy walk, sunset drinks, and buffet food along the canals.", status: "planning" },
+          {
+            dep: "12:00", arr: "—", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Rome", fromZh: "罗马",
+            to: "Milan", toZh: "米兰",
+            type: "Travel",
+            activity: "Arrive Milan — Noon", activityZh: "中午抵达米兰",
+            notes: "Transport TBC. Check in and freshen up before afternoon.",
+            notesZh: "交通待定。办理入住整理后游览下午。",
+            status: "not-booked"
+          },
+          {
+            dep: "19:00", arr: "21:30", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Hotel", fromZh: "酒店",
+            to: "Navigli", toZh: "纳维利运河区",
+            type: "Food & Drink",
+            activity: "Canal District & Aperitivo", activityZh: "运河区与开胃酒",
+            notes: "Perfect arrival evening — easy walk, sunset drinks, and buffet food along the canals.",
+            notesZh: "完美的抵达夜晚——沿运河轻松散步，欣赏日落，享用饮品与自助小食。",
+            status: "planning"
+          },
         ]
       },
       {
-        date: "Wed 28 Oct 2026",
-        desc: "Duomo District — Full Day",
+        date: "Wed 28 Oct 2026", dateZh: "2026年10月28日（周三）",
+        desc: "Duomo District — Full Day", descZh: "大教堂区 — 全天游览",
         items: [
-          { dep: "09:30", arr: "12:30", travellers: "Son · Dad · Mom", from: "Hotel", to: "Duomo di Milano", type: "Landmark", activity: "Rooftop & Cathedral Visit", notes: "Best visited in the morning before crowds peak; rooftop lift requires tickets.", status: "planning" },
-          { dep: "12:30", arr: "14:00", travellers: "Son · Dad · Mom", from: "Duomo", to: "Galleria Vittorio Emanuele II", type: "Architecture & Shopping", activity: "Shopping & Architecture Stroll", notes: "Italy's oldest shopping gallery; great for a coffee stop. Same piazza as Duomo.", status: "planning" },
-          { dep: "15:00", arr: "18:00", travellers: "Son · Dad · Mom", from: "Galleria Area", to: "Quadrilatero della Moda", type: "Shopping", activity: "Luxury Shopping — Montenapoleone", notes: "High-end fashion district; great for window shopping. 15 min walk from Galleria.", status: "planning" },
+          {
+            dep: "09:30", arr: "12:30", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Hotel", fromZh: "酒店",
+            to: "Duomo di Milano", toZh: "米兰大教堂",
+            type: "Landmark",
+            activity: "Rooftop & Cathedral Visit", activityZh: "大教堂屋顶与内部参观",
+            notes: "Best visited in the morning before crowds peak; rooftop lift requires tickets.",
+            notesZh: "上午游览最佳，人流较少；屋顶电梯需提前购票。",
+            status: "planning"
+          },
+          {
+            dep: "12:30", arr: "14:00", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Duomo", fromZh: "大教堂",
+            to: "Galleria Vittorio Emanuele II", toZh: "埃马努埃莱二世长廊",
+            type: "Architecture & Shopping",
+            activity: "Shopping & Architecture Stroll", activityZh: "购物与建筑漫步",
+            notes: "Italy's oldest shopping gallery; great for a coffee stop. Same piazza as Duomo.",
+            notesZh: "意大利最古老的购物长廊，适合喝咖啡。与大教堂同处一广场。",
+            status: "planning"
+          },
+          {
+            dep: "15:00", arr: "18:00", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Galleria Area", fromZh: "长廊区",
+            to: "Quadrilatero della Moda", toZh: "米兰时装四角",
+            type: "Shopping",
+            activity: "Luxury Shopping — Montenapoleone", activityZh: "高端购物 — 蒙特拿破仑大街",
+            notes: "High-end fashion district; great for window shopping. 15 min walk from Galleria.",
+            notesZh: "高端时尚区，适合橱窗购物。距长廊步行15分钟。",
+            status: "planning"
+          },
         ]
       },
       {
-        date: "Thu 29 Oct 2026",
-        desc: "Da Vinci & Castello — Full Day",
+        date: "Thu 29 Oct 2026", dateZh: "2026年10月29日（周四）",
+        desc: "Da Vinci & Castello — Full Day", descZh: "达芬奇与城堡 — 全天游览",
         items: [
-          { dep: "09:00", arr: "11:00", travellers: "Son · Dad · Mom", from: "Hotel", to: "Santa Maria delle Grazie", type: "Art & Culture", activity: "Da Vinci's \"The Last Supper\"", notes: "Critical: Must book tickets months in advance. Time slots fill up fast — book immediately.", status: "critical" },
-          { dep: "11:30", arr: "13:00", travellers: "Son · Dad · Mom", from: "Santa Maria delle Grazie", to: "Sforzesco Castle", type: "History & Parks", activity: "Sforzesco Castle & Parco Sempione", notes: "5-min walk from Last Supper. Massive fortress; courtyards are free to enter.", status: "planning" },
-          { dep: "13:00", arr: "14:30", travellers: "Son · Dad · Mom", from: "Sforzesco Castle", to: "Parco Sempione", type: "Leisure", activity: "Lunch & Parco Sempione Stroll", notes: "Relax in the park behind the castle after a morning of museums.", status: "planning" },
+          {
+            dep: "09:00", arr: "11:00", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Hotel", fromZh: "酒店",
+            to: "Santa Maria delle Grazie", toZh: "感恩圣母教堂",
+            type: "Art & Culture",
+            activity: "Da Vinci's \"The Last Supper\"", activityZh: "达芬奇《最后的晚餐》",
+            notes: "Critical: Must book tickets months in advance. Time slots fill up fast — book immediately.",
+            notesZh: "重要提示：必须提前数月预订门票。名额极速售罄——请立即预订。",
+            status: "critical"
+          },
+          {
+            dep: "11:30", arr: "13:00", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Santa Maria delle Grazie", fromZh: "感恩圣母教堂",
+            to: "Sforzesco Castle", toZh: "斯福尔扎城堡",
+            type: "History & Parks",
+            activity: "Sforzesco Castle & Parco Sempione", activityZh: "斯福尔扎城堡与森皮奥内公园",
+            notes: "5-min walk from Last Supper. Massive fortress; courtyards are free to enter.",
+            notesZh: "距《最后的晚餐》步行5分钟。宏大城堡，内院免费参观。",
+            status: "planning"
+          },
+          {
+            dep: "13:00", arr: "14:30", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Sforzesco Castle", fromZh: "斯福尔扎城堡",
+            to: "Parco Sempione", toZh: "森皮奥内公园",
+            type: "Leisure",
+            activity: "Lunch & Parco Sempione Stroll", activityZh: "午餐与森皮奥内公园漫步",
+            notes: "Relax in the park behind the castle after a morning of museums.",
+            notesZh: "参观完上午的博物馆后，在城堡后方的公园休闲放松。",
+            status: "planning"
+          },
         ]
       },
       {
-        date: "Fri 30 Oct 2026",
-        desc: "Lake Como — Full Day Trip",
+        date: "Fri 30 Oct 2026", dateZh: "2026年10月30日（周五）",
+        desc: "Lake Como — Full Day Trip", descZh: "科莫湖 — 全天一日游",
         items: [
-          { dep: "08:00", arr: "09:15", travellers: "Son · Dad · Mom", from: "Milano Centrale", to: "Varenna-Esino", type: "Day Trip", activity: "Train to Varenna-Esino", notes: "Take early train from Milano Centrale. Journey ~1h15m. Full day required.", status: "planning" },
-          { dep: "09:30", arr: "12:30", travellers: "Son · Dad · Mom", from: "Varenna", to: "Bellagio", type: "Day Trip", activity: "Ferry to Bellagio & Explore", notes: "Take ferry from Varenna to Bellagio. Walk the village, enjoy the lake views.", status: "planning" },
-          { dep: "13:00", arr: "14:30", travellers: "Son · Dad · Mom", from: "Bellagio", to: "Bellagio", type: "Dining", activity: "Lunch in Bellagio", notes: "Lakeside restaurants with stunning views. Try risotto or fresh lake fish.", status: "planning" },
-          { dep: "16:00", arr: "17:15", travellers: "Son · Dad · Mom", from: "Varenna-Esino", to: "Milano Centrale", type: "Travel", activity: "Return Train to Milan", notes: "Allow buffer time for ferry back to Varenna before catching train.", status: "planning" },
+          {
+            dep: "08:00", arr: "09:15", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Milano Centrale", fromZh: "米兰中央站",
+            to: "Varenna-Esino", toZh: "瓦伦纳-埃西诺",
+            type: "Day Trip",
+            activity: "Train to Varenna-Esino", activityZh: "火车前往瓦伦纳-埃西诺",
+            notes: "Take early train from Milano Centrale. Journey ~1h15m. Full day required.",
+            notesZh: "从米兰中央站乘早班车，约1小时15分钟，需安排全天时间。",
+            status: "planning"
+          },
+          {
+            dep: "09:30", arr: "12:30", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Varenna", fromZh: "瓦伦纳",
+            to: "Bellagio", toZh: "贝拉焦",
+            type: "Day Trip",
+            activity: "Ferry to Bellagio & Explore", activityZh: "渡轮至贝拉焦并探索",
+            notes: "Take ferry from Varenna to Bellagio. Walk the village, enjoy the lake views.",
+            notesZh: "从瓦伦纳乘渡轮至贝拉焦。漫步小村，欣赏湖光山色。",
+            status: "planning"
+          },
+          {
+            dep: "13:00", arr: "14:30", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Bellagio", fromZh: "贝拉焦",
+            to: "Bellagio", toZh: "贝拉焦",
+            type: "Dining",
+            activity: "Lunch in Bellagio", activityZh: "贝拉焦午餐",
+            notes: "Lakeside restaurants with stunning views. Try risotto or fresh lake fish.",
+            notesZh: "湖畔餐厅，景色绝美。可尝试烩饭或新鲜湖鱼。",
+            status: "planning"
+          },
+          {
+            dep: "16:00", arr: "17:15", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Varenna-Esino", fromZh: "瓦伦纳-埃西诺",
+            to: "Milano Centrale", toZh: "米兰中央站",
+            type: "Travel",
+            activity: "Return Train to Milan", activityZh: "返程火车回米兰",
+            notes: "Allow buffer time for ferry back to Varenna before catching train.",
+            notesZh: "预留充足时间乘渡轮返回瓦伦纳再搭火车。",
+            status: "planning"
+          },
         ]
       },
       {
-        date: "Sat 31 Oct 2026",
-        desc: "Brera & Art — Last Full Day",
+        date: "Sat 31 Oct 2026", dateZh: "2026年10月31日（周六）",
+        desc: "Brera & Art — Last Full Day", descZh: "布雷拉与艺术 — 最后全天",
         items: [
-          { dep: "09:30", arr: "11:00", travellers: "Son · Dad · Mom", from: "Hotel", to: "Brera District", type: "Leisure", activity: "Brera Neighborhood Morning Walk", notes: "Milan's most charming artistic neighborhood. Great for coffee and browsing galleries.", status: "planning" },
-          { dep: "11:00", arr: "13:30", travellers: "Son · Dad · Mom", from: "Brera District", to: "Pinacoteca di Brera", type: "Fine Art", activity: "Pinacoteca di Brera — Renaissance Art", notes: "One of Italy's finest art galleries. Allow 2 hours for a comfortable visit.", status: "planning" },
-          { dep: "13:30", arr: "15:00", travellers: "Son · Dad · Mom", from: "Pinacoteca di Brera", to: "Brera", type: "Dining", activity: "Lunch in Brera", notes: "Many excellent trattorias in the neighborhood. Last relaxed meal in Milan.", status: "planning" },
-          { dep: "15:30", arr: "18:00", travellers: "Son · Dad · Mom", from: "Brera", to: "Milan Center", type: "Leisure", activity: "Free Afternoon — Last Shopping & Souvenirs", notes: "Final afternoon to revisit favorites or pick up last-minute souvenirs before departure day.", status: "planning" },
+          {
+            dep: "09:30", arr: "11:00", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Hotel", fromZh: "酒店",
+            to: "Brera District", toZh: "布雷拉街区",
+            type: "Leisure",
+            activity: "Brera Neighborhood Morning Walk", activityZh: "布雷拉街区晨间漫步",
+            notes: "Milan's most charming artistic neighborhood. Great for coffee and browsing galleries.",
+            notesZh: "米兰最有艺术气息的街区。适合喝咖啡、逛画廊。",
+            status: "planning"
+          },
+          {
+            dep: "11:00", arr: "13:30", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Brera District", fromZh: "布雷拉街区",
+            to: "Pinacoteca di Brera", toZh: "布雷拉画廊",
+            type: "Fine Art",
+            activity: "Pinacoteca di Brera — Renaissance Art", activityZh: "布雷拉画廊 — 文艺复兴艺术",
+            notes: "One of Italy's finest art galleries. Allow 2 hours for a comfortable visit.",
+            notesZh: "意大利最顶级的艺术画廊之一，舒适游览约需2小时。",
+            status: "planning"
+          },
+          {
+            dep: "13:30", arr: "15:00", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Pinacoteca di Brera", fromZh: "布雷拉画廊",
+            to: "Brera", toZh: "布雷拉",
+            type: "Dining",
+            activity: "Lunch in Brera", activityZh: "布雷拉午餐",
+            notes: "Many excellent trattorias in the neighborhood. Last relaxed meal in Milan.",
+            notesZh: "街区内多家优质小餐馆，在米兰的最后一顿轻松午餐。",
+            status: "planning"
+          },
+          {
+            dep: "15:30", arr: "18:00", travellers: "Son · Dad · Mom", travellersZh: "儿子 · 爸爸 · 妈妈",
+            from: "Brera", fromZh: "布雷拉",
+            to: "Milan Center", toZh: "米兰市中心",
+            type: "Leisure",
+            activity: "Free Afternoon — Last Shopping & Souvenirs", activityZh: "自由下午 — 最后购物与纪念品",
+            notes: "Final afternoon to revisit favorites or pick up last-minute souvenirs before departure day.",
+            notesZh: "最后的下午，可重游喜爱之地或购买纪念品，准备次日离程。",
+            status: "planning"
+          },
         ]
       }
     ]
   }
 ];
 
-const container = document.getElementById('sections');
+const noMapTypes = new Set(['Flight', 'Travel', 'Transfer', 'Rest', 'Train']);
 
-itinerary.forEach(city => {
-  const citySection = document.createElement('div');
-  citySection.className = 'city-section';
-  citySection.innerHTML = `
-    <div class="city-heading">
-      <span class="city-flag">${city.flag}</span>
-      <h2>${city.city}</h2>
-      <span class="city-dates-range">${city.dateRange}</span>
-    </div>
-  `;
+function T(item, field) {
+  // Return the zh field if lang is zh and it exists, otherwise fall back to en
+  if (lang === 'zh') {
+    const zhField = field + 'Zh';
+    if (item[zhField] !== undefined) return item[zhField];
+  }
+  return item[field];
+}
 
-  city.days.forEach(day => {
-    const group = document.createElement('div');
-    group.className = 'date-group';
-    group.innerHTML = `
-      <div class="date-strip">
-        <div class="date-pill ${city.color}">📅 ${day.date}</div>
-        <span class="day-description">${day.desc}</span>
-        <div class="date-divider"></div>
+function getBadgeHtml(status) {
+  if (lang === 'zh') {
+    if (status === 'critical')    return '<span class="priority-badge">⚠ 必须提前预订</span>';
+    if (status === 'not-booked')  return '<span class="badge not-booked">未预订</span>';
+    if (status === 'booked')      return '<span class="badge booked">✓ 已预订</span>';
+    return '<span class="badge">计划中</span>';
+  }
+  if (status === 'critical')    return '<span class="priority-badge">⚠ Book Ahead</span>';
+  if (status === 'not-booked')  return '<span class="badge not-booked">Not Booked</span>';
+  if (status === 'booked')      return '<span class="badge booked">✓ Booked</span>';
+  return '<span class="badge">Planning</span>';
+}
+
+function getTypeLabel(type) {
+  return (lang === 'zh' && typeZh[type]) ? typeZh[type] : type;
+}
+
+function renderSections() {
+  const container = document.getElementById('sections');
+  container.innerHTML = '';
+
+  itinerary.forEach(city => {
+    const citySection = document.createElement('div');
+    citySection.className = 'city-section';
+    const cityName = lang === 'zh' ? city.cityZh : city.city;
+    citySection.innerHTML = `
+      <div class="city-heading">
+        <span class="city-flag">${city.flag}</span>
+        <h2>${cityName}</h2>
+        <span class="city-dates-range">${city.dateRange}</span>
       </div>
     `;
 
-    const grid = document.createElement('div');
-    grid.className = 'grid';
-
-    const noMapTypes = new Set(['Flight', 'Travel', 'Transfer', 'Rest', 'Train']);
-
-    day.items.forEach((item, i) => {
-      let badge = '';
-      if (item.status === 'critical') badge = '<span class="priority-badge">⚠ Book Ahead</span>';
-      else if (item.status === 'not-booked') badge = '<span class="badge not-booked">Not Booked</span>';
-      else if (item.status === 'booked') badge = '<span class="badge booked">✓ Booked</span>';
-      else badge = '<span class="badge">Planning</span>';
-
-      const timeDisplay = (item.dep !== '—' || item.arr !== '—')
-        ? `<div class="time-row">${item.dep}<br><span class="sep">↓</span><br>${item.arr}</div>`
-        : `<div class="time-row">—</div>`;
-
-      const mapsUrl = !noMapTypes.has(item.type)
-        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.to + ', ' + city.city + ', Italy')}`
-        : null;
-      const destLabel = mapsUrl
-        ? `<a class="map-link" href="${mapsUrl}" target="_blank" rel="noopener">${item.to} ↗</a>`
-        : item.to;
-
-      grid.innerHTML += `
-        <div class="card">
-          <div class="card-accent"></div>
-          <div class="card-body">
-            ${timeDisplay}
-            <div class="card-type">${item.type}</div>
-            <div class="card-main">
-              <div class="card-title">${item.activity}</div>
-              <div class="route">
-                <span class="route-from">${item.from}</span>
-                <span class="route-arrow">→</span>
-                <span class="route-to">${destLabel}</span>
-              </div>
-              <div class="notes">${item.notes}</div>
-              <span class="traveller-tag">${item.travellers}</span>
-            </div>
-            <div class="card-footer">${badge}</div>
-          </div>
+    city.days.forEach(day => {
+      const group = document.createElement('div');
+      group.className = 'date-group';
+      const dateStr = lang === 'zh' ? day.dateZh : day.date;
+      const descStr = lang === 'zh' ? day.descZh : day.desc;
+      group.innerHTML = `
+        <div class="date-strip">
+          <div class="date-pill ${city.color}">📅 ${dateStr}</div>
+          <span class="day-description">${descStr}</span>
+          <div class="date-divider"></div>
         </div>
       `;
+
+      const grid = document.createElement('div');
+      grid.className = 'grid';
+
+      day.items.forEach(item => {
+        const badge = getBadgeHtml(item.status);
+        const typeLabel = getTypeLabel(item.type);
+        const dep = item.dep, arr = item.arr;
+        const timeDisplay = (dep !== '—' || arr !== '—')
+          ? `<div class="time-row">${dep}<br><span class="sep">↓</span><br>${arr}</div>`
+          : `<div class="time-row">—</div>`;
+
+        const fromLabel = T(item, 'from');
+        const toLabel   = T(item, 'to');
+        const mapsQuery = encodeURIComponent(item.to + ', ' + city.city + ', Italy');
+        const mapsUrl   = !noMapTypes.has(item.type)
+          ? `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`
+          : null;
+        const destLabel = mapsUrl
+          ? `<a class="map-link" href="${mapsUrl}" target="_blank" rel="noopener">${toLabel} ↗</a>`
+          : toLabel;
+
+        grid.innerHTML += `
+          <div class="card">
+            <div class="card-accent"></div>
+            <div class="card-body">
+              ${timeDisplay}
+              <div class="card-type">${typeLabel}</div>
+              <div class="card-main">
+                <div class="card-title">${T(item, 'activity')}</div>
+                <div class="route">
+                  <span class="route-from">${fromLabel}</span>
+                  <span class="route-arrow">→</span>
+                  <span class="route-to">${destLabel}</span>
+                </div>
+                <div class="notes">${T(item, 'notes')}</div>
+                <span class="traveller-tag">${T(item, 'travellers')}</span>
+              </div>
+              <div class="card-footer">${badge}</div>
+            </div>
+          </div>
+        `;
+      });
+
+      group.appendChild(grid);
+      citySection.appendChild(group);
     });
 
-    group.appendChild(grid);
-    citySection.appendChild(group);
+    container.appendChild(citySection);
   });
+}
 
-  container.appendChild(citySection);
-});
+function updateStaticText() {
+  const isZh = lang === 'zh';
+  document.getElementById('trip-label').textContent = isZh
+    ? '旅游行程 · 2026年10月–11月'
+    : 'Travel Itinerary · October – November 2026';
+  document.getElementById('travellers-text').textContent = isZh
+    ? '儿子 · 爸爸 · 妈妈'
+    : 'Son · Dad · Mom';
+  document.getElementById('summary-travellers').textContent = isZh
+    ? '儿子 · 爸爸 · 妈妈'
+    : 'Son · Dad · Mom';
+  // Summary chip labels and legend spans
+  document.querySelectorAll('[data-en]').forEach(el => {
+    el.textContent = isZh ? el.dataset.zh : el.dataset.en;
+  });
+}
+
+function setLang(l) {
+  lang = l;
+  document.getElementById('btn-en').classList.toggle('active', l === 'en');
+  document.getElementById('btn-zh').classList.toggle('active', l === 'zh');
+  document.documentElement.lang = l === 'zh' ? 'zh' : 'en';
+  updateStaticText();
+  renderSections();
+}
+
+// Initial render
+renderSections();
 </script>
 </body>
 </html>
